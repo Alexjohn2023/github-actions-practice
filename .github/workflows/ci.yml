@@ -19,4 +19,4 @@ jobs:
           node-version: '20'
 
       - name: Say hello
-        run: "exitt 1"
+        run: echo "Hello World"
