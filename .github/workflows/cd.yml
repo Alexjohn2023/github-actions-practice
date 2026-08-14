@@ -19,22 +19,20 @@ jobs:
     steps:
       - name: Debug OIDC claims
         run: |
-          OIDC_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
-          echo "Raw token payload:"
+          OIDC_TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
           echo $OIDC_TOKEN | python3 -c "
-import sys, json, base64
-data = json.load(sys.stdin)
-token = data['value']
-payload = token.split('.')[1]
-padding = 4 - len(payload) % 4
-payload += '=' * padding
-decoded = json.loads(base64.b64decode(payload))
-print('sub:', decoded.get('sub'))
-print('aud:', decoded.get('aud'))
-print('job_workflow_ref:', decoded.get('job_workflow_ref'))
-print('repository:', decoded.get('repository'))
-"
+          import sys, json, base64
+          data = json.load(sys.stdin)
+          token = data['value']
+          payload = token.split('.')[1]
+          padding = 4 - len(payload) % 4
+          payload += '=' * padding
+          decoded = json.loads(base64.b64decode(payload))
+          print('sub:', decoded.get('sub'))
+          print('aud:', decoded.get('aud'))
+          print('job_workflow_ref:', decoded.get('job_workflow_ref'))
+          print('repository:', decoded.get('repository'))
+          "
 
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,27 +44,18 @@ print('repository:', decoded.get('repository'))
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Package application
-        run: |
-          tar -czf app.tar.gz strings.js package.json package-lock.json
+        run: tar -czf app.tar.gz strings.js package.json package-lock.json
 
       - name: Upload artifact to S3
-        run: |
-          aws s3 cp app.tar.gz s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz
+        run: aws s3 cp app.tar.gz s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz
 
       - name: Deploy to EC2 via SSM
         run: |
           aws ssm send-command \
-            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
-            --parameters commands=[
-              "cd /home/ubuntu",
-              "aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz app.tar.gz",
-              "tar -xzf app.tar.gz",
-              "npm install --production",
-              "pm2 restart app || pm2 start strings.js --name app",
-              "pm2 save"
-            ] \
-            --region ${{ secrets.AWS_REGION }}
+            --parameters '{"commands":["cd /home/ubuntu","aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz app.tar.gz","tar -xzf app.tar.gz","npm install --production","pm2 restart app || pm2 start strings.js --name app","pm2 save"]}' \
+            --region "${{ secrets.AWS_REGION }}"
 
       - name: Verify deployment
         run: |
