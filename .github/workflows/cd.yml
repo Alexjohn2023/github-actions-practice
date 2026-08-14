@@ -34,7 +34,16 @@ jobs:
           aws ssm send-command \
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
-            --parameters '{"commands":["cd /home/ubuntu","aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz app.tar.gz","tar -xzf app.tar.gz","npm install --production","pm2 delete app || true","pm2 start server.js --name app","pm2 save"]}' \
+            --parameters "{\"commands\":[
+              \"cd /tmp\",
+              \"aws s3 cp s3://${{ secrets.S3_BUCKET }}/deployments/app-${{ github.sha }}.tar.gz app.tar.gz --region ${{ secrets.AWS_REGION }}\",
+              \"tar -xzf app.tar.gz\",
+              \"npm install --production\",
+              \"/usr/lib/node_modules/pm2/bin/pm2 delete app || true\",
+              \"/usr/lib/node_modules/pm2/bin/pm2 start server.js --name app\",
+              \"/usr/lib/node_modules/pm2/bin/pm2 save\",
+              \"ls -la /tmp/\"
+            ]}" \
             --region "${{ secrets.AWS_REGION }}"
 
       - name: Verify deployment
