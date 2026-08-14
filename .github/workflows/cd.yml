@@ -19,6 +19,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Debug OIDC token
+        run: |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
+          echo $TOKEN | python3 -c "
+          import sys, json, base64
+          token = json.load(sys.stdin)['value'].split('.')[1]
+          padded = token + '=' * (4 - len(token) % 4)
+          claims = json.loads(base64.b64decode(padded))
+          print(json.dumps(claims, indent=2))
+          "
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
