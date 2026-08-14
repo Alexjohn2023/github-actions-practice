@@ -30,6 +30,16 @@ jobs:
         run: npm test
       - name: Dependency scan
         run: npm audit --audit-level=moderate
+      
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app-${{ matrix.node-version }}
+          path: dist/
+          retention-days: 7
 
       - name: Use secret
         run: echo "The API key is $MY_API_KEY"
