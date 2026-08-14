@@ -28,9 +28,10 @@ jobs:
 
       - name: Run tests
         run: npm test
+
       - name: Dependency scan
         run: npm audit --audit-level=moderate
-      
+
       - name: Build application
         run: npm run build
 
@@ -45,3 +46,23 @@ jobs:
         run: echo "The API key is $MY_API_KEY"
         env:
           MY_API_KEY: ${{ secrets.MY_API_KEY }}
+
+  code-scanning:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript"
