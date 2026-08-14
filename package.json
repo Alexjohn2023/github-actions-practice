@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "scripts": {
+  "test": "node test.js",
+  "build": "mkdir -p dist && cp strings.js dist/strings.js && echo 'Build complete' > dist/build.txt"
+}
   },
   "keywords": [],
   "author": "",
